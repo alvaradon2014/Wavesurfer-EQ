@@ -5,6 +5,8 @@ const express = require('express');
 const publicPath = path.join(__dirname, '/');
 const port = process.env.PORT || 3001;    // for heroku setup, in case that happens
 
+var shell = require('shelljs');
+
 var app = express();                // express is used through app
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
@@ -25,7 +27,9 @@ io.on('connection', function(client) {
 
   client.on('rec', function(data){
     console.log(data);
-    console.log("*Insert rec script"); /////////// replace with recording script
+    console.log("Recording...");
+    shell.exec('arecord --channels=2 --device=plughw:1,0 --duration=4 --format S16_LE --rate 44100 --vumeter=mono iotSend.wav');
+    shell.exec('ffmpeg -i iotSend.wav -vn -ar 44100 -ac 2 -ab 192k -f mp3 out.mp3 -y');
     // will emit finish message when user done rec to update waveform
     io.emit('read', 'done');
   });

@@ -1,5 +1,42 @@
 'use strict';
 
+// Web Sockets Functions
+// Sharing user-selected EQ type to backend
+function getEQtype() {
+  var x = document.getElementById("EQtype").value;
+  console.log(x);
+
+  var socket = io.connect('http://localhost:3001');
+  socket.on('connect', function(data){
+    socket.emit('typeSel', x);
+  });
+}
+
+function getScore() {
+  var type = document.getElementById("EQtype").value;
+  var i;
+  switch(type) {
+
+    case 'bright':
+        i = 0;
+        break;
+
+    case 'dark':
+        i = 1;
+        break;
+  };
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var myObj = JSON.parse(this.responseText);
+      if (myObj[i] != undefined) {
+      document.getElementById("demoScore").innerHTML = myObj[i];
+    }}
+  };
+  xmlhttp.open("GET", "fake.txt", true);
+  xmlhttp.send();
+}
+
 // Create an instance
 var wavesurfer = Object.create(WaveSurfer);
 
@@ -13,7 +50,9 @@ var wavesurfer = WaveSurfer.create({
     });
 
     // Load audio
-    wavesurfer.load('Odesza - Above The Middle.mp3');
+    setTimeout(function() {
+      wavesurfer.load('out.mp3');
+      }, 1500);
 
     // Equalizer
     wavesurfer.on('ready', function () {
@@ -26,6 +65,7 @@ var wavesurfer = WaveSurfer.create({
       });
 
         // EQ options
+          // first half: freqs changed automatically, second half: variable by user
         var autoEQ = [
             {
                 f: 32,
@@ -91,13 +131,25 @@ var wavesurfer = WaveSurfer.create({
             }
         ];
 
+
         // Grab EQ type and score
         var type = document.getElementById("EQtype").value;
-        var score = document.getElementById("demo").innerHTML;
+        var score = document.getElementById("demoScore").innerHTML;
 
         // Format score for comparison
         var scoreFloat = parseFloat(score);
         var scoreRound = Math.round(scoreFloat * 100);
+
+        console.log(type + ", " + score);
+        // Default filters, get overwritten when score and type are received
+        var EQfilters = autoEQ.map(function (band) {
+            var filter = wavesurfer.backend.ac.createBiquadFilter();
+            filter.type = band.type;
+            filter.Q.value = 1;
+            filter.frequency.value = band.f;
+            filter.gain.value = 0;
+            return filter;
+          });
 
         if (type == 'bright') {
         // Create bright EQ parameters
@@ -131,7 +183,7 @@ var wavesurfer = WaveSurfer.create({
                 filter.frequency.value = band.f;
             // meh score: cut 2k and under
             if ((filter.frequency.value == 32) || (filter.frequency.value == 64) || (filter.frequency.value == 125) || (filter.frequency.value == 250) || (filter.frequency.value == 500) || (filter.frequency.value == 1000)) {
-                  filter.gain.value = -5;
+                  filter.gain.value = -4;
                 } else {
                   filter.gain.value = 0;
                 }
@@ -147,7 +199,7 @@ var wavesurfer = WaveSurfer.create({
                 filter.frequency.value = band.f;
             // good score: boost 4k and up
             if ((filter.frequency.value == 4000) || (filter.frequency.value == 8000) || (filter.frequency.value == 1600)) {
-                  filter.gain.value = 5;
+                  filter.gain.value = 3;
                 } else {
                   filter.gain.value = 0;
                 }
@@ -189,7 +241,7 @@ var wavesurfer = WaveSurfer.create({
                 filter.frequency.value = band.f;
             // meh score: cut 1k and above
             if ((filter.frequency.value == 1000) || (filter.frequency.value == 2000) || (filter.frequency.value == 4000) || (filter.frequency.value == 8000) || (filter.frequency.value == 16000)) {
-                  filter.gain.value = -5;
+                  filter.gain.value = -4;
                 } else {
                   filter.gain.value = 0;
                 }
@@ -205,7 +257,7 @@ var wavesurfer = WaveSurfer.create({
                 filter.frequency.value = band.f;
             // good score: boost 500 and under
             if ((filter.frequency.value == 500) || (filter.frequency.value == 250) || (filter.frequency.value == 125) || (filter.frequency.value == 64) || (filter.frequency.value == 32)) {
-                  filter.gain.value = 5;
+                  filter.gain.value = 3;
                 } else {
                   filter.gain.value = 0;
                 }
@@ -215,16 +267,6 @@ var wavesurfer = WaveSurfer.create({
             console.log("EQ type: " + type + ", Score: " + score);
             console.log("You're good!");
           }
-        } else {
-          // Create filters
-          var EQfilters = autoEQ.map(function (band) {
-              var filter = wavesurfer.backend.ac.createBiquadFilter();
-              filter.type = band.type;
-              filter.Q.value = 1;
-              filter.frequency.value = band.f;
-              filter.gain.value = 0;
-              return filter;
-            });
         }
 
         // Connect filters to wavesurfer
@@ -281,6 +323,8 @@ var wavesurfer = WaveSurfer.create({
         var showProgress = function (percent) {
             progressDiv.style.display = 'block';
             progressBar.style.width = percent + '%';
+            // Make ABSOLUTE sure that score is obtained before audio loads
+            getScore();
         };
 
         var hideProgress = function () {
@@ -293,48 +337,3 @@ var wavesurfer = WaveSurfer.create({
         wavesurfer.on('error', hideProgress);
     }());
 });
-
-// Web Sockets Functions
-// Sharing user-selected EQ type to backend
-function getEQtype() {
-  var x = document.getElementById("EQtype").value;
-  console.log(x);
-
-  var socket = io.connect('http://localhost:3001');
-  socket.on('connect', function(data){
-    socket.emit('typeSel', x);
-  });
-}
-
-function getScore() {
-  var type = document.getElementById("EQtype").value;
-  var i;
-  switch(type) {
-
-    case 'bright':
-        i = 0;
-        break;
-
-    case 'dark':
-        i = 1;
-        break;
-
-    case 'harmonic':
-        i = 2;
-        break;
-
-    case 'distortion':
-        i = 3;
-        break;
-  };
-  var xmlhttp = new XMLHttpRequest();
-  xmlhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      var myObj = JSON.parse(this.responseText);
-      if (myObj[i] != undefined)
-      document.getElementById("demo").innerHTML = myObj[i];
-    }
-  };
-  xmlhttp.open("GET", "fake.txt", true);
-  xmlhttp.send();
-}

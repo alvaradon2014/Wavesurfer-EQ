@@ -34,9 +34,9 @@
             socket.on('read', function(d){
               // re-executes script
               location.reload();
-              if (d == "done")
+              if (d == "done") {
                 console.log("I am so " + d);
-            });
+            }});
           });
         </script>
 
@@ -50,7 +50,7 @@
         </script>
 
         <!-- Reading from txt file -->
-        <p id="demo"></p>
+        <p id="demoScore"></p>
 
         <!-- Main Section -->
     </head>
@@ -97,8 +97,6 @@
                   <option value="default">Select</option>
                   <option value="bright">Bright</option>
                   <option value="dark">Dark</option>
-                  <option value="harmonic">Harmonic</option>
-                  <option value="distortion">Distortion</option>
                 </select>
               </form>
             </div>
