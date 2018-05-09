@@ -12,29 +12,28 @@ function getEQtype() {
   });
 }
 
-function getScore() {
-  var type = document.getElementById("EQtype").value;
-  var i;
-  switch(type) {
-
-    case 'bright':
-        i = 0;
-        break;
-
-    case 'dark':
-        i = 1;
-        break;
-  };
+function getParams() {
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       var myObj = JSON.parse(this.responseText);
-      if (myObj[i] != undefined) {
-      document.getElementById("demoScore").innerHTML = myObj[i];
+      if (myObj != undefined) {
+      document.getElementById("f32").innerHTML = myObj[0];
+      document.getElementById("f64").innerHTML = myObj[1];
+      document.getElementById("f125").innerHTML = myObj[2];
+      document.getElementById("f250").innerHTML = myObj[3];
+      document.getElementById("f500").innerHTML = myObj[4];
+      document.getElementById("f1k").innerHTML = myObj[5];
+      document.getElementById("f2k").innerHTML = myObj[6];
+      document.getElementById("f4k").innerHTML = myObj[7];
+      document.getElementById("f8k").innerHTML = myObj[8];
+      document.getElementById("f16k").innerHTML = myObj[9];
     }}
   };
-  xmlhttp.open("GET", "fake.txt", true);
+  xmlhttp.open("GET", "params.txt", true);
   xmlhttp.send();
+
+
 }
 
 // Create an instance
@@ -51,7 +50,7 @@ var wavesurfer = WaveSurfer.create({
 
     // Load audio
     setTimeout(function() {
-      wavesurfer.load('out.mp3');
+      wavesurfer.load('iotOrig.wav');
       }, 1500);
 
     // Equalizer
@@ -131,143 +130,49 @@ var wavesurfer = WaveSurfer.create({
             }
         ];
 
+        // Grab EQ parameters, parse for float
+        var f32 = parseFloat(document.getElementById("f32").innerHTML);
+        var f64 = parseFloat(document.getElementById("f64").innerHTML);
+        var f125= parseFloat(document.getElementById("f125").innerHTML);
+        var f250 = parseFloat(document.getElementById("f250").innerHTML);
+        var f500 = parseFloat(document.getElementById("f500").innerHTML);
+        var f1k = parseFloat(document.getElementById("f1k").innerHTML);
+        var f2k = parseFloat(document.getElementById("f2k").innerHTML);
+        var f4k = parseFloat(document.getElementById("f4k").innerHTML);
+        var f8k = parseFloat(document.getElementById("f8k").innerHTML);
+        var f16k = parseFloat(document.getElementById("f16k").innerHTML);
+        console.log(f32);
 
-        // Grab EQ type and score
-        var type = document.getElementById("EQtype").value;
-        var score = document.getElementById("demoScore").innerHTML;
-
-        // Format score for comparison
-        var scoreFloat = parseFloat(score);
-        var scoreRound = Math.round(scoreFloat * 100);
-
-        console.log(type + ", " + score);
         // Default filters, get overwritten when score and type are received
         var EQfilters = autoEQ.map(function (band) {
             var filter = wavesurfer.backend.ac.createBiquadFilter();
             filter.type = band.type;
             filter.Q.value = 1;
             filter.frequency.value = band.f;
-            filter.gain.value = 0;
+
+            if(filter.frequency.value == 32){
+              filter.gain.value = f32;
+            } else if(filter.frequency.value == 64){
+              filter.gain.value = f64;
+            } else if(filter.frequency.value == 125){
+              filter.gain.value = f125;
+            } else if(filter.frequency.value == 250){
+              filter.gain.value = f250;
+            } else if(filter.frequency.value == 500){
+              filter.gain.value = f500;
+            } else if(filter.frequency.value == 1000){
+              filter.gain.value = f1k;
+            } else if(filter.frequency.value == 2000){
+              filter.gain.value = f2k;
+            } else if(filter.frequency.value == 4000){
+              filter.gain.value = f4k;
+            } else if(filter.frequency.value == 8000){
+              filter.gain.value = f8k;
+            } else if(filter.frequency.value == 16000){
+              filter.gain.value = f16k;
+            }
             return filter;
           });
-
-        if (type == 'bright') {
-        // Create bright EQ parameters
-        // add if statement based on score
-
-          if(scoreRound < 35){
-            console.log("EQ type: " + type + ", Score: " + scoreFloat);
-            // Create filters
-            var EQfilters = autoEQ.map(function (band) {
-                var filter = wavesurfer.backend.ac.createBiquadFilter();
-                filter.type = band.type;
-                filter.Q.value = 1;
-                filter.frequency.value = band.f;
-            // bad score: cut 4k and under, boost 8k and above
-            if ((filter.frequency.value == 32) || (filter.frequency.value == 64) || (filter.frequency.value == 125) || (filter.frequency.value == 250) || (filter.frequency.value == 500) || (filter.frequency.value == 1000) || (filter.frequency.value == 2000)) {
-                  filter.gain.value = -5;
-                } else if (filter.frequency.value == 4000) {
-                  filter.gain.value = 0;
-                } else if ((filter.frequency.value == 8000) || (filter.frequency.value == 16000)) {
-                  filter.gain.value = 5;
-                }
-                return filter;
-              });
-          } else if(scoreRound < 60){
-            console.log("EQ type: " + type + ", Score: " + score);
-            // Create filters
-            var EQfilters = autoEQ.map(function (band) {
-                var filter = wavesurfer.backend.ac.createBiquadFilter();
-                filter.type = band.type;
-                filter.Q.value = 1;
-                filter.frequency.value = band.f;
-            // meh score: cut 2k and under
-            if ((filter.frequency.value == 32) || (filter.frequency.value == 64) || (filter.frequency.value == 125) || (filter.frequency.value == 250) || (filter.frequency.value == 500) || (filter.frequency.value == 1000)) {
-                  filter.gain.value = -4;
-                } else {
-                  filter.gain.value = 0;
-                }
-                return filter;
-              });
-          } else if(scoreRound < 80){
-            console.log("EQ type: " + type + ", Score: " + score);
-            // Create filters
-            var EQfilters = autoEQ.map(function (band) {
-                var filter = wavesurfer.backend.ac.createBiquadFilter();
-                filter.type = band.type;
-                filter.Q.value = 1;
-                filter.frequency.value = band.f;
-            // good score: boost 4k and up
-            if ((filter.frequency.value == 4000) || (filter.frequency.value == 8000) || (filter.frequency.value == 1600)) {
-                  filter.gain.value = 3;
-                } else {
-                  filter.gain.value = 0;
-                }
-                return filter;
-              });
-          } else if(scoreRound > 80){
-            console.log("EQ type: " + type + ", Score: " + score);
-            console.log("You're good!");
-          }
-
-        } else if (type == 'dark') {
-
-        // Create dark EQ parameters
-        // add switch statement based on score
-
-          if(scoreRound < 35){
-            console.log("EQ type: " + type + ", Score: " + score);
-            // Create filters
-            var EQfilters = autoEQ.map(function (band) {
-                var filter = wavesurfer.backend.ac.createBiquadFilter();
-                filter.type = band.type;
-                filter.Q.value = 1;
-                filter.frequency.value = band.f;
-            // bad score: cut 500 and above, boost 250 and under
-            if ((filter.frequency.value == 500) || (filter.frequency.value == 1000) || (filter.frequency.value == 2000) || (filter.frequency.value == 4000) || (filter.frequency.value == 8000) || (filter.frequency.value == 16000)) {
-                  filter.gain.value = -5;
-                } else if ((filter.frequency.value == 250) || (filter.frequency.value == 125) || (filter.frequency.value == 64) || (filter.frequency.value == 32)) {
-                  filter.gain.value = 5;
-                }
-                return filter;
-              });
-          } else if(scoreRound < 60){
-            console.log("EQ type: " + type + ", Score: " + score);
-            // Create filters
-            var EQfilters = autoEQ.map(function (band) {
-                var filter = wavesurfer.backend.ac.createBiquadFilter();
-                filter.type = band.type;
-                filter.Q.value = 1;
-                filter.frequency.value = band.f;
-            // meh score: cut 1k and above
-            if ((filter.frequency.value == 1000) || (filter.frequency.value == 2000) || (filter.frequency.value == 4000) || (filter.frequency.value == 8000) || (filter.frequency.value == 16000)) {
-                  filter.gain.value = -4;
-                } else {
-                  filter.gain.value = 0;
-                }
-                return filter;
-              });
-          } else if(scoreRound < 80){
-            console.log("EQ type: " + type + ", Score: " + score);
-            // Create filters
-            var EQfilters = autoEQ.map(function (band) {
-                var filter = wavesurfer.backend.ac.createBiquadFilter();
-                filter.type = band.type;
-                filter.Q.value = 1;
-                filter.frequency.value = band.f;
-            // good score: boost 500 and under
-            if ((filter.frequency.value == 500) || (filter.frequency.value == 250) || (filter.frequency.value == 125) || (filter.frequency.value == 64) || (filter.frequency.value == 32)) {
-                  filter.gain.value = 3;
-                } else {
-                  filter.gain.value = 0;
-                }
-                return filter;
-              });
-          } else if(scoreRound > 80){
-            console.log("EQ type: " + type + ", Score: " + score);
-            console.log("You're good!");
-          }
-        }
 
         // Connect filters to wavesurfer
         wavesurfer.backend.setFilters(EQfilters);
@@ -323,8 +228,8 @@ var wavesurfer = WaveSurfer.create({
         var showProgress = function (percent) {
             progressDiv.style.display = 'block';
             progressBar.style.width = percent + '%';
-            // Make ABSOLUTE sure that score is obtained before audio loads
-            getScore();
+            // Make ABSOLUTE sure that paramters are obtained before audio loads
+            getParams();
         };
 
         var hideProgress = function () {

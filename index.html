@@ -28,29 +28,26 @@
           var socket = io.connect('http://localhost:3001');
           socket.on('connect', function(data){
             socket.emit('join', 'Hello from client!');
-            // read desired score from model result
-            getScore();
+            // read EQ parameters based off score from model result
+            getParams();
             // triggeres when score file is updated
             socket.on('read', function(d){
               // re-executes script
               location.reload();
               if (d == "done") {
-                console.log("I am so " + d);
+                console.log("Score is " + d + " updating");
             }});
           });
         </script>
 
         <script>
-        function recordFnc() {
+        function recordInit() {
           var socket = io.connect('http://localhost:3001');
           socket.on('connect', function(data){
-            socket.emit('rec', 'Start Recording...');
+            socket.emit('firstRec', 'Start Recording...');
           });
         }
         </script>
-
-        <!-- Reading from txt file -->
-        <p id="demoScore"></p>
 
         <!-- Main Section -->
     </head>
@@ -82,8 +79,7 @@
                         <i class="glyphicon glyphicon-pause"></i>
                         Pause
                     </button>
-                    <button onclick="recordFnc()" class="btn btn-primary">Record</button>
-
+                    <button onclick="recordInit()" class="btn btn-primary">Initial Record</button>
                     <div id="equalizer">
                         <!-- Here be equalizer sliders -->
                     </div>
@@ -100,8 +96,10 @@
                 </select>
               </form>
             </div>
-            <button onclick="getEQtype()" class="btn btn-primary">Start EQ</button>
-
+            <button onclick="getEQtype()" class="btn btn-primary" id="EQbutt">Start EQ</button>
+            <!-- Reading from txt file -->
+            Current Gain Settings: <a id="f32"></a>, <a id="f64"></a>, <a id="f125"></a>, <a id="f250"></a>, <a id="f500"></a>, <a id="f1k"></a>, <a id="f2k"></a>, <a id="f4k"></a>, <a id="f8k"></a>, <a id="f16k"></a>
+            <div id="EQrec"></div>
             <!-- Credits to wavesurfer -->
             <div class="footer row">
                 <div class="col-sm-12">
